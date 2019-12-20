@@ -15,7 +15,7 @@ Gun.log.once = (a, b, c, d) => {
 require('gun/sea');
 require('gun/lib/unset');
 
-var gun = Gun(['https://gunjs.herokuapp.com/gun']);
+var gun = Gun(/*['https://gunjs.herokuapp.com/gun']*/);
 
 var GunFS = require("./index.js");
 
