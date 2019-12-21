@@ -4,18 +4,20 @@ gunfs
 `npm install gunfs`
 
 ```
+var GunFS = require("gunfs");//GunFS(dbRoot, FileSystemKey)
+var gunfs = new GunFS(gun.get("you place the spot where files are"), "and you can have multipul sets in the spot");
 
-GunFS.write(path, value, callback)  callback(err, gunResponce)<--
+gunfs.write(path, value, callback)  callback(err, gunResponce)<--
 
-GunFS.read(path, callback, gunResponce)  callback(err, gunResponce ? gunResponceObject : gunResponceObject.value)<--
+gunfs.read(path, callback, gunResponce)  callback(err, gunResponce ? gunResponceObject : gunResponceObject.value)<--
 
-GunFS.delete(path, callback)  callback(err, true)<--
+gunfs.delete(path, callback)  callback(err, true)<--
 
-GunFS.list(callback) callback(err, [{ path, value, id, ct, mt }]);
+gunfs.list(callback) callback(err, [{ path, value, id, ct, mt }]);
 
-GunFS.stats(path, callback) callback(err, { path, id, ct, mt })
+gunfs.stats(path, callback) callback(err, { path, id, ct, mt })
             
-GunFS.exist(path, callback) callback(err,true||null)
+gunfs.exist(path, callback) callback(err,true||null)
 
 ```
 
