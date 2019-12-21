@@ -14,11 +14,20 @@ gunfs.read(path, callback, gunResponce)  callback(err, gunResponce ? gunResponce
 gunfs.delete(path, callback)  callback(err, true)<--
 
 gunfs.list(callback) callback(err, [{ path, value, id, ct, mt }]);
+gunfs.list(path, callback) callback(err, [{ path, value, id, ct, mt }]);
 
 gunfs.stats(path, callback) callback(err, { path, id, ct, mt })
             
 gunfs.exist(path, callback) callback(err,true||null)
 
+```
+
+Events
+------
+
+```
+gunfs.on("*", callback)  callback(fileObject, gunResponce, gunId, gunMsg, gunEv)
+gunfs.on(path, callback)  callback(fileObject, gunResponce, gunId, gunMsg, gunEv)
 ```
 
 [https://github.com/bmatusiak](https://github.com/bmatusiak)

@@ -1,1 +1,5 @@
 node_modules/
+
+core
+package-lock.json
+radata*
