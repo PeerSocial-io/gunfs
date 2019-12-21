@@ -165,7 +165,7 @@ act.j = function() {
         if (err) throw err;
         if (data) {
             if(data.length > 0)
-                throw new Error("read test on unknown file FAIL (file should not have data)");
+                throw new Error("list test fail, (list should be empty)");
             console.log("list test good", data);
             process.exit();
         }

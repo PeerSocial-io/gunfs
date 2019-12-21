@@ -13,7 +13,7 @@ GunFS.prototype.write = function(path, value, callback) {
             _self.read(path, (err, read) => {
                 if(!err){
                     var writeFile = this.dbRoot().get(this.FileSystemKey + path);
-                    writeFile.put({ path: path, value: value, ct: read.ct ,mt: Date.now() });
+                    writeFile.put({ path: path, value: value, ct: read.ct, mt: Date.now() });
                     this.filesSet.set(writeFile, (res) => {
                         callback(null, res);
                     });
@@ -22,7 +22,7 @@ GunFS.prototype.write = function(path, value, callback) {
         }
         else {
             var writeFile = this.dbRoot().get(this.FileSystemKey + path);
-            writeFile.put({ path: path, value: value, ct: Date.now() });
+            writeFile.put({ path: path, value: value, ct: Date.now(), mt: Date.now() });
             this.filesSet.set(writeFile, (res) => {
                 callback(null, res);
             });
