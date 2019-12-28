@@ -98,7 +98,7 @@ act.a2b = function() {
 
 act.a2c = function() {
     console.log("----------------");
-    gunfs.rename("/test/nested","/testaa/renamed", function(err, list) {
+    gunfs.rename("/test/nested",{to:"/testaa/renamed"}, function(err, list) {
         if(err) throw err;
         console.log("a2c rename",err, list);
         act.a2d();
@@ -232,7 +232,7 @@ act.b2e = function() {
 act.c1a = async function(){
     console.log("----------------");
     var res = await gunfs.readdir("/");
-    console.log("await gunfs.readdir", res);
+    console.log("c1a await gunfs.readdir", res);
     act.c1b();
     
 };
@@ -240,14 +240,14 @@ act.c1a = async function(){
 act.c1b = async function(){
     console.log("----------------");
     var res = await gunfs.mkdir("/asyncTest");
-    console.log("await gunfs.mkdir", res);
+    console.log("c1b await gunfs.mkdir", res);
     act.c1c();
 };
 
 act.c1c = async function(){
     console.log("----------------");
     var res = await gunfs.readdir("/");
-    console.log("await gunfs.readdir", res);
+    console.log("c1c await gunfs.readdir", res);
     act.c1d();
 };
 
@@ -255,14 +255,14 @@ act.c1c = async function(){
 act.c1d = async function(){
     console.log("----------------");
     var res = await gunfs.mkfile("/asyncTest/filetesting.txt","somedata");
-    console.log("await gunfsgunfs.mkfile", res);
+    console.log("c1d await gunfsgunfs.mkfile", res);
     act.c1e();
 };
 
 act.c1e = async function(){
     console.log("----------------");
     var res = await gunfs.readfile("/asyncTest/filetesting.txt");
-    console.log("await gunfsgunfs.mkfile", res);
+    console.log("c1e await gunfsgunfs.mkfile", res);
     act.c1f();
 };
 
@@ -270,14 +270,14 @@ act.c1e = async function(){
 act.c1f = async function(){
     console.log("----------------");
     var res = await gunfs.readdir("/asyncTest/");
-    console.log("await gunfs.readdir", res);
+    console.log("c1f await gunfs.readdir", res);
     act.c1g();
 };
 
 act.c1g = async function(){
     console.log("----------------");
-    var res = await gunfs.rename("/asyncTest/filetesting.txt","/asyncTest/filetesting-renamed.txt");
-    console.log("await gunfs.rename", res);
+    var res = await gunfs.rename("/asyncTest/filetesting.txt",{to:"/asyncTest/filetesting-renamed.txt"});
+    console.log("c1g await gunfs.rename", res);
     act.c1h();
 };
 
@@ -285,26 +285,26 @@ act.c1g = async function(){
 act.c1h = async function(){
     console.log("----------------");
     var res = await gunfs.readdir("/asyncTest/");
-    console.log("await gunfs.readdir", res);
+    console.log("c1h await gunfs.readdir", res);
     act.c1i();
 };
 
 act.c1i = async function(){
     console.log("----------------");
     var res = await gunfs.stat("/asyncTest/filetesting-renamed.txt");
-    console.log("await gunfs.stat", res);
+    console.log("c1i await gunfs.stat", res);
     act.c1j();
 };
 act.c1j = async function(){
     console.log("----------------");
     var res = await gunfs.rmdir("/asyncTest");
-    console.log("await gunfs.rmdir", res);
+    console.log("c1j await gunfs.rmdir", res);
     act.c1k();
 };
 act.c1k = async function(){
     console.log("----------------");
     var res = await gunfs.readdir("/");
-    console.log("await gunfs.readdir", res);
+    console.log("c1k await gunfs.readdir", res);
     act.done();
 };
 
@@ -314,9 +314,9 @@ act.done = function() {
     test_done();
 };
 
-global.act = act;
-global.gun = gun;
-global.gunfs = gunfs;
-//act.a();
+// global.act = act;
+// global.gun = gun;
+// global.gunfs = gunfs;
+act.start();
 
 function test_done() { setTimeout(process.exit, 1000); }

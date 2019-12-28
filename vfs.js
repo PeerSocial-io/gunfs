@@ -23,8 +23,8 @@ function GunFS(dbRoot) {
 GunFS.prototype = new EventEmitter();
 GunFS.prototype._emit = GunFS.prototype.emit;
 delete GunFS.prototype.emit;
-
-GunFS.prototype.stat = async function(path, callback) {
+GunFS.prototype.stat = async function(path, options, callback) {
+    if (typeof options == "function") callback = options;
     var _self = this;
     var doPromise = false;
     if (!callback) doPromise = true;
@@ -79,8 +79,8 @@ GunFS.prototype.stat = async function(path, callback) {
     });
     else run();
 };
-
-GunFS.prototype.readfile = async function(path, callback) {
+GunFS.prototype.readfile = async function(path, options, callback) {
+    if (typeof options == "function") callback = options;
     var _self = this;
     var doPromise = false;
     if (!callback) doPromise = true;
@@ -106,7 +106,9 @@ GunFS.prototype.readfile = async function(path, callback) {
                         break;
                     }
                 }
-                if (exist && exist.value) return callback(null, exist.value);
+                if (exist && exist.value) return _self._decode(exist.value,(value)=>{
+                    callback(null, value);
+                });
                 if (!exist) return callback(404, null, $_path, item, contence);
                 else {
                     var chain = item.get(exist.id);
@@ -127,8 +129,8 @@ GunFS.prototype.readfile = async function(path, callback) {
     });
     else run();
 };
-
-GunFS.prototype.readdir = async function(path, callback) {
+GunFS.prototype.readdir = async function(path, options, callback) {
+    if (typeof options == "function") callback = options;
     var _self = this;
     var doPromise = false;
     if (!callback) doPromise = true;
@@ -174,12 +176,29 @@ GunFS.prototype.readdir = async function(path, callback) {
     });
     else run();
 };
-
-GunFS.prototype.mkfile = async function(path, value, callback) {
+GunFS.prototype.mkfile = async function(path, options, callback) {
     var _self = this;
+    
     var doPromise = false;
     if (!callback) doPromise = true;
-
+    
+    function getValue(cb) {
+        var v = "";
+        if (typeof options == "object" && options.stream) {
+            options.stream.on("data", function(e) {
+                if (e) v += e;
+            });
+            options.stream.on("end", function(e) {
+                if (e) v += e;
+                cb(v);
+            });
+        }
+        else if (typeof options == "string") {
+            v = options;
+            cb(v);
+        }
+    }
+    
     function run() {
         var parentDir = path.split("/");
         var file_name = parentDir.pop();
@@ -202,7 +221,7 @@ GunFS.prototype.mkfile = async function(path, value, callback) {
                 $contence = item.get(pathID);
                 newFile = {
                     name: file_name,
-                    value: value,
+                    //value: value,
                     id: pathID,
                     ct: Date.now(),
                     mt: Date.now(),
@@ -212,16 +231,21 @@ GunFS.prototype.mkfile = async function(path, value, callback) {
             else {
                 $contence = contence.get(exist.uid);
                 newFile = {
-                    value: value,
                     mt: Date.now()
                 };
             }
-            $contence.put(newFile, function() {
-                _self.notify.put({ path: path, to: null, t: Date.now(), event: "change" })
-                if (!exist) contence.set($contence, (res) => {
-                    callback(null);
+            getValue((value) => {
+                _self._encode(value,(value)=>{
+                    newFile.value = value;
+                    newFile.size = lengthInUtf8Bytes(value);
+                    $contence.put(newFile, function() {
+                        _self.notify.put({ path: path, to: null, t: Date.now(), event: "change", type: "file"});
+                        if (!exist) contence.set($contence, (res) => {
+                            callback(null);
+                        });
+                        else callback(null);
+                    });
                 });
-                else callback(null);
             });
         });
     }
@@ -233,8 +257,8 @@ GunFS.prototype.mkfile = async function(path, value, callback) {
     });
     else run();
 };
-
-GunFS.prototype.mkdir = async function(path, callback) {
+GunFS.prototype.mkdir = async function(path, options, callback) {
+    if (typeof options == "function") callback = options;
     var _self = this;
     var doPromise = false;
     if (!callback) doPromise = true;
@@ -252,7 +276,7 @@ GunFS.prototype.mkdir = async function(path, callback) {
             var pathID = _self.dbRoot()._.gun.opt()._.opt.uuid();
             var dir = item.get(pathID);
             dir.put({ name: folder_name, id: pathID, ct: Date.now(), mt: Date.now(), type: "folder" }, () => {
-                _self.notify.put({ path: path, to: null, t: Date.now(), event: "create", type: "folder" })
+                _self.notify.put({ path: path, to: null, t: Date.now(), event: "change", type: "folder" });
                 contence.set(dir, (res) => {
                     callback(null);
                 });
@@ -267,12 +291,11 @@ GunFS.prototype.mkdir = async function(path, callback) {
     });
     else run();
 };
-
-GunFS.prototype.rmfile = async function(path, callback) {
-    return await this.rmdir(path, callback);
+GunFS.prototype.rmfile = async function(path, options, callback) {
+    return await this.rmdir(path, options, callback);
 };
-
-GunFS.prototype.rmdir = async function(path, callback) {
+GunFS.prototype.rmdir = async function(path, options, callback) {
+    if (typeof options == "function") callback = options;
     var _self = this;
     var doPromise = false;
     if (!callback) doPromise = true;
@@ -313,9 +336,9 @@ GunFS.prototype.rmdir = async function(path, callback) {
     });
     else run();
 };
-
-GunFS.prototype.rename = async function(pathFrom, pathTo, done) {
+GunFS.prototype.rename = async function(pathFrom, options, done) {
     var _self = this;
+    var pathTo = options.to;
     var doPromise = false;
     if (!done) doPromise = true;
 
@@ -373,7 +396,6 @@ GunFS.prototype.rename = async function(pathFrom, pathTo, done) {
             else callback("file not found");
         });
     }
-
     if (doPromise) return new Promise((resolve) => {
         done = function(err, results) {
             resolve(err || results);
@@ -381,6 +403,12 @@ GunFS.prototype.rename = async function(pathFrom, pathTo, done) {
         run();
     });
     else run();
+};
+GunFS.prototype._encode = function(value,cb){
+    cb(value);
+};
+GunFS.prototype._decode = function(value,cb){
+    cb(value);
 };
 
 async function getSet(listSet, contence, callback) {
@@ -416,5 +444,10 @@ async function getSet(listSet, contence, callback) {
         }
         return obj;
     }
+}
+function lengthInUtf8Bytes(str) {
+  // Matches only the 10.. bytes that are non-initial characters in a multi-byte sequence.
+  var m = encodeURIComponent(str).match(/%[89ABab]/g);
+  return str.length + (m ? m.length : 0);
 }
 module.exports = GunFS;
