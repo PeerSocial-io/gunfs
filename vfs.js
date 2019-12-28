@@ -1,20 +1,26 @@
 "use strict";
 var EventEmitter = require("events").EventEmitter;
+
 // var gun = require("gun")();
 function GunFS(dbRoot) {
     this.dbRoot = () => { return dbRoot };
     this.root = this.dbRoot().get("root");
+    this.root.on(() => {});
     this.notify = this.dbRoot().get("notify");
     var _self = this;
     var initTime = Date.now();
+    var fired = {};
     this.notify.on((a, b, c, d) => {
         if (a && a.t > initTime) {
+            initTime = a.t;
             var event = {
                 path: a.path,
                 to: a.to,
                 t: a.t,
                 event: a.event
             };
+
+            fired[a.path] = a.t;
             _self._emit(a.path, event);
             _self._emit("*", event);
         }
@@ -31,6 +37,17 @@ GunFS.prototype.stat = async function(path, options, callback) {
 
     function run() {
         var $_path = path;
+
+        if ($_path == "/") {
+            return callback(null, {
+                name: "",
+                size: 1,
+                mtime: 0,
+                ctime: 0,
+                mime: "folder"
+            });
+        }
+
         if (typeof path == "string") {
             if (!(path.indexOf("/") == 0)) throw new Error("Must be full path starting with /");
             path = path.split("/");
@@ -106,9 +123,10 @@ GunFS.prototype.readfile = async function(path, options, callback) {
                         break;
                     }
                 }
-                if (exist && exist.value) return _self._decode(exist.value,(value)=>{
-                    callback(null, value);
-                });
+                if (exist && (exist.value || exist.value == ""))
+                    return _self._decode(exist.value, (value) => {
+                        callback(null, value);
+                    });
                 if (!exist) return callback(404, null, $_path, item, contence);
                 else {
                     var chain = item.get(exist.id);
@@ -178,10 +196,10 @@ GunFS.prototype.readdir = async function(path, options, callback) {
 };
 GunFS.prototype.mkfile = async function(path, options, callback) {
     var _self = this;
-    
+
     var doPromise = false;
     if (!callback) doPromise = true;
-    
+
     function getValue(cb) {
         var v = "";
         if (typeof options == "object" && options.stream) {
@@ -198,7 +216,7 @@ GunFS.prototype.mkfile = async function(path, options, callback) {
             cb(v);
         }
     }
-    
+
     function run() {
         var parentDir = path.split("/");
         var file_name = parentDir.pop();
@@ -235,11 +253,11 @@ GunFS.prototype.mkfile = async function(path, options, callback) {
                 };
             }
             getValue((value) => {
-                _self._encode(value,(value)=>{
+                _self._encode(value, (value) => {
                     newFile.value = value;
                     newFile.size = lengthInUtf8Bytes(value);
                     $contence.put(newFile, function() {
-                        _self.notify.put({ path: path, to: null, t: Date.now(), event: "change", type: "file"});
+                        _self.notify.put({ path: path, to: null, t: Date.now(), event: "change", type: "file" });
                         if (!exist) contence.set($contence, (res) => {
                             callback(null);
                         });
@@ -404,10 +422,10 @@ GunFS.prototype.rename = async function(pathFrom, options, done) {
     });
     else run();
 };
-GunFS.prototype._encode = function(value,cb){
+GunFS.prototype._encode = function(value, cb) {
     cb(value);
 };
-GunFS.prototype._decode = function(value,cb){
+GunFS.prototype._decode = function(value, cb) {
     cb(value);
 };
 
@@ -445,9 +463,10 @@ async function getSet(listSet, contence, callback) {
         return obj;
     }
 }
+
 function lengthInUtf8Bytes(str) {
-  // Matches only the 10.. bytes that are non-initial characters in a multi-byte sequence.
-  var m = encodeURIComponent(str).match(/%[89ABab]/g);
-  return str.length + (m ? m.length : 0);
+    // Matches only the 10.. bytes that are non-initial characters in a multi-byte sequence.
+    var m = encodeURIComponent(str).match(/%[89ABab]/g);
+    return str.length + (m ? m.length : 0);
 }
 module.exports = GunFS;
